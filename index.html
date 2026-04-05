@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matt Mosich â Weekly Planner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F3EE;
+    --surface: #FFFFFF;
+    --border: #E2DDD6;
+    --border-dark: #C8C2B8;
+    --text: #1A1714;
+    --text-mid: #6B6560;
+    --text-light: #9E9890;
+    --accent-light: #F0EDE8;
+    --green: #2D6A4F;
+    --green-bg: #EAF4EE;
+    --amber: #92600A;
+    --amber-bg: #FDF3E0;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.5; }
+
+  .shell { display: grid; grid-template-columns: 200px 1fr; min-height: 100vh; }
+
+  .sidebar { background: var(--text); color: white; padding: 2rem 1.25rem; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar-logo { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: #888; text-transform: uppercase; margin-bottom: 2rem; }
+  .week-badge { font-family: var(--mono); font-size: 13px; color: white; margin-bottom: 2rem; line-height: 1.4; }
+  .week-badge span { display: block; font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+  .nav-item { display: block; padding: 9px 10px; font-size: 13px; font-weight: 400; color: #888; cursor: pointer; border-radius: 6px; margin-bottom: 2px; transition: all 0.15s; border: none; background: none; text-align: left; width: 100%; font-family: var(--sans); }
+  .nav-item:hover { color: white; background: rgba(255,255,255,0.08); }
+  .nav-item.active { color: white; background: rgba(255,255,255,0.12); font-weight: 500; }
+  .sidebar-section-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin: 1.5rem 0 0.5rem; padding: 0 10px; }
+  .sidebar-bottom { margin-top: auto; }
+  .week-list-item { display: block; padding: 7px 10px; font-size: 12px; color: #777; cursor: pointer; border-radius: 5px; margin-bottom: 1px; font-family: var(--mono); border: none; background: none; text-align: left; width: 100%; transition: all 0.15s; }
+  .week-list-item:hover { color: white; background: rgba(255,255,255,0.08); }
+
+  .main { padding: 2.5rem 2.5rem 4rem; max-width: 720px; }
+  .page-header { margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
+  .page-title { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: var(--text-light); }
+
+  .section { margin-bottom: 2rem; }
+  .section-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-light); margin-bottom: 0.75rem; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+
+  .entry-input-row { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); gap: 8px; }
+  .entry-input-row input { flex: 1; border: none; background: none; font-size: 14px; font-family: var(--sans); color: var(--text); outline: none; }
+  .entry-input-row input::placeholder { color: var(--text-light); }
+  .entry-hint { font-size: 11px; color: var(--text-light); font-family: var(--mono); }
+
+  .entry-list { padding: 6px 0; }
+  .entry-item { padding: 10px 14px; border-bottom: 1px solid var(--border); position: relative; }
+  .entry-item:last-child { border-bottom: none; }
+  .entry-item-header { display: flex; align-items: center; gap: 8px; }
+  .entry-item-name { font-size: 14px; font-weight: 500; flex: 1; }
+  .entry-item-type { font-size: 10px; font-family: var(--mono); color: var(--text-light); text-transform: uppercase; letter-spacing: 0.04em; }
+  .entry-expand-btn { font-size: 11px; color: var(--text-light); background: none; border: none; cursor: pointer; padding: 2px 6px; font-family: var(--mono); transition: color 0.15s; }
+  .entry-expand-btn:hover { color: var(--text); }
+  .entry-remove-btn { font-size: 16px; color: var(--text-light); background: none; border: none; cursor: pointer; padding: 0 4px; line-height: 1; opacity: 0; transition: opacity 0.15s; }
+  .entry-item:hover .entry-remove-btn { opacity: 1; }
+  .entry-prep { display: none; margin-top: 8px; }
+  .entry-prep.open { display: block; }
+  .entry-prep textarea { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 13px; font-family: var(--sans); color: var(--text); background: var(--bg); resize: vertical; min-height: 60px; outline: none; }
+  .entry-prep textarea:focus { border-color: var(--border-dark); }
+
+  .field-row { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); gap: 12px; }
+  .field-row:last-child { border-bottom: none; }
+  .field-label { font-size: 13px; color: var(--text-mid); min-width: 130px; }
+  .field-row input[type="number"] { width: 70px; border: 1px solid var(--border); border-radius: 5px; padding: 5px 8px; font-size: 14px; font-family: var(--sans); color: var(--text); background: var(--bg); outline: none; text-align: center; }
+  .field-row input[type="text"] { flex: 1; border: none; background: none; font-size: 14px; font-family: var(--sans); color: var(--text); outline: none; }
+  .field-row input[type="text"]::placeholder { color: var(--text-light); }
+
+  .toggle-wrap { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .toggle-wrap:last-child { border-bottom: none; }
+  .toggle-label { font-size: 14px; }
+  .toggle { width: 38px; height: 22px; background: var(--border); border-radius: 11px; border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle.on { background: var(--text); }
+  .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
+  .toggle.on::after { left: 19px; }
+  .travel-detail { padding: 8px 14px 12px; border-bottom: 1px solid var(--border); display: none; }
+  .travel-detail input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; font-family: var(--sans); color: var(--text); background: var(--bg); outline: none; }
+
+  /* TAP BUTTONS */
+  .tap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+  .tap-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; cursor: pointer; transition: border-color 0.15s, background 0.1s; user-select: none; }
+  .tap-card:hover { border-color: var(--border-dark); }
+  .tap-card:active { background: var(--accent-light); }
+  .tap-card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); margin-bottom: 8px; }
+  .tap-count { font-size: 36px; font-weight: 300; font-family: var(--mono); color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .tap-sub { font-size: 11px; color: var(--text-light); font-family: var(--mono); }
+  .tap-undo { display: inline-block; margin-top: 6px; font-size: 11px; color: var(--text-light); background: none; border: none; cursor: pointer; font-family: var(--mono); padding: 0; }
+  .tap-undo:hover { color: var(--text); }
+
+  /* DASH TRACKING */
+  .dash-section { margin-bottom: 1rem; }
+  .dash-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .dash-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .dash-row-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); font-family: var(--mono); }
+  .dash-count-badge { font-size: 13px; font-family: var(--mono); font-weight: 500; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 8px; }
+  .dash-display { font-family: var(--mono); font-size: 13px; color: var(--text); letter-spacing: 2px; min-height: 22px; word-break: break-all; line-height: 1.6; margin-bottom: 6px; }
+  .dash-display .group { display: inline-block; margin-right: 6px; }
+  .dash-display .dash-char { font-size: 13px; }
+  .dash-controls { display: flex; gap: 6px; }
+  .dash-add-btn { background: var(--text); color: white; border: none; border-radius: 5px; padding: 5px 14px; font-size: 13px; font-family: var(--mono); cursor: pointer; transition: opacity 0.15s; }
+  .dash-add-btn:hover { opacity: 0.8; }
+  .dash-add-btn:active { opacity: 0.6; }
+  .dash-undo-btn { background: none; border: 1px solid var(--border); border-radius: 5px; padding: 5px 10px; font-size: 13px; font-family: var(--mono); color: var(--text-mid); cursor: pointer; transition: all 0.15s; }
+  .dash-undo-btn:hover { border-color: var(--border-dark); color: var(--text); }
+
+  /* PROGRESS */
+  .progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .progress-label { font-size: 13px; color: var(--text-mid); min-width: 130px; }
+  .progress-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--text); border-radius: 2px; transition: width 0.3s; }
+  .progress-fill.done { background: var(--green); }
+  .progress-val { font-size: 12px; font-family: var(--mono); color: var(--text-mid); min-width: 60px; text-align: right; }
+
+  /* METRICS */
+  .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; text-align: center; }
+  .metric-label { font-size: 10px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .metric-val { font-size: 20px; font-weight: 400; font-family: var(--mono); color: var(--text); }
+
+  /* FUNNEL READ-ONLY */
+  .funnel-read-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .funnel-group-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); margin-bottom: 8px; }
+  .funnel-stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .funnel-stat-row:last-child { border-bottom: none; }
+  .funnel-stat-key { color: var(--text-mid); }
+  .funnel-stat-week { font-family: var(--mono); color: var(--text); }
+  .funnel-stat-total { font-family: var(--mono); font-size: 11px; color: var(--text-light); }
+
+  /* SUMMARY */
+  .summary-row { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-key { color: var(--text-mid); }
+  .summary-val { font-family: var(--mono); font-size: 13px; color: var(--text); font-weight: 500; }
+
+  /* ARCHIVE */
+  .archive-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 10px; }
+  .archive-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .archive-week { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+  .archive-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+  .archive-stat { font-size: 12px; color: var(--text-mid); font-family: var(--mono); }
+  .archive-stat strong { color: var(--text); }
+
+  /* BUTTONS */
+  .btn-primary { background: var(--text); color: white; border: none; border-radius: 7px; padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--sans); transition: opacity 0.15s; }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-secondary { background: none; color: var(--text-mid); border: 1px solid var(--border); border-radius: 7px; padding: 10px 20px; font-size: 14px; cursor: pointer; font-family: var(--sans); transition: all 0.15s; }
+  .btn-secondary:hover { border-color: var(--border-dark); color: var(--text); }
+  .btn-row { display: flex; gap: 10px; margin-top: 1rem; align-items: center; }
+
+  .day-selector { display: flex; gap: 4px; margin-bottom: 1.25rem; }
+  .day-btn { padding: 6px 12px; font-size: 12px; font-family: var(--mono); border: 1px solid var(--border); border-radius: 5px; background: none; color: var(--text-mid); cursor: pointer; transition: all 0.15s; }
+  .day-btn:hover { border-color: var(--border-dark); color: var(--text); }
+  .day-btn.active { background: var(--text); color: white; border-color: var(--text); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .empty-state { padding: 2rem 14px; text-align: center; font-size: 13px; color: var(--text-light); font-family: var(--mono); }
+
+  .status-pill { font-size: 10px; font-family: var(--mono); padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .pill-green { background: var(--green-bg); color: var(--green); }
+  .pill-amber { background: var(--amber-bg); color: var(--amber); }
+
+  .save-confirm { font-size: 12px; color: var(--green); font-family: var(--mono); display: none; }
+  hr.section-divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+  /* Loading overlay */
+  .loading-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; font-family: var(--mono); font-size: 13px; color: var(--text-light); transition: opacity 0.3s; }
+  .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="loading-overlay" id="loading">Loading...</div>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Mosich Group</div>
+    <div class="week-badge"><span>Current week</span><span id="sidebar-week"></span></div>
+    <button class="nav-item active" onclick="showTab('sunday',this)">Sunday plan</button>
+    <button class="nav-item" onclick="showTab('daily',this)">Daily log</button>
+    <button class="nav-item" onclick="showTab('funnel',this)">Funnel</button>
+    <button class="nav-item" onclick="showTab('summary',this)">Weekly summary</button>
+    <div class="sidebar-section-label">Past weeks</div>
+    <div id="week-history-list"></div>
+    <div class="sidebar-bottom">
+      <div class="sidebar-section-label">Archive</div>
+      <button class="nav-item" onclick="showTab('archive',this)">All weeks</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- SUNDAY -->
+    <div id="tab-sunday" class="tab-content active">
+      <div class="page-header">
+        <div class="page-title">Sunday plan</div>
+        <div class="page-sub">Set your week before it starts.</div>
+      </div>
+      <div class="section">
+        <div class="section-label">Calendar this week</div>
+        <div class="card">
+          <div class="entry-input-row"><input type="text" id="cal-input-client" placeholder="Add client meeting â hit enter" onkeydown="addCalEntry(event,'client')"><span class="entry-hint">client</span></div>
+          <div class="entry-input-row"><input type="text" id="cal-input-sales" placeholder="Add sales meeting â hit enter" onkeydown="addCalEntry(event,'sales')"><span class="entry-hint">sales</span></div>
+          <div class="entry-input-row"><input type="text" id="cal-input-referral" placeholder="Add referral partner call â hit enter" onkeydown="addCalEntry(event,'referral')"><span class="entry-hint">referral</span></div>
+          <div class="entry-input-row"><input type="text" id="cal-input-event" placeholder="Add event or conference â hit enter" onkeydown="addCalEntry(event,'event')"><span class="entry-hint">event</span></div>
+          <div id="cal-entry-list" class="entry-list"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Speeches / trainings / webinars</div>
+        <div class="card">
+          <div class="entry-input-row"><input type="text" id="speech-input" placeholder="Add item â hit enter" onkeydown="addSpeechEntry(event)"></div>
+          <div id="speech-entry-list" class="entry-list"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Travel</div>
+        <div class="card">
+          <div class="toggle-wrap"><span class="toggle-label">Traveling this week</span><button class="toggle" id="travel-toggle" onclick="toggleTravel()"></button></div>
+          <div class="travel-detail" id="travel-detail"><input type="text" id="travel-input" placeholder="When / where â note how it affects prep windows"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Prep notes</div>
+        <div class="card">
+          <div class="entry-input-row"><input type="text" id="prep-input" placeholder="Name the thing needing prep â hit enter" onkeydown="addPrepEntry(event)"></div>
+          <div id="prep-entry-list" class="entry-list"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">LinkedIn content</div>
+        <div class="card">
+          <div class="field-row"><span class="field-label">Posts this week</span><input type="number" id="s-posts-target" min="0" max="7" value="4"></div>
+          <div class="field-row"><span class="field-label">Writing windows</span><input type="text" id="s-writing" placeholder="e.g. Mon + Wed 8:30â10:30, Sat AM"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Outreach targets</div>
+        <div class="card">
+          <div class="field-row"><span class="field-label">Weekly outreach</span><input type="number" id="s-outreach-target" min="0" value="75"></div>
+          <div class="field-row"><span class="field-label">Weekly comments</span><input type="number" id="s-comment-target" min="0" value="50"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">BD priorities this week</div>
+        <div class="card">
+          <div class="entry-input-row"><input type="text" id="bd-input" placeholder="Add follow-up or priority â hit enter" onkeydown="addBdEntry(event)"></div>
+          <div id="bd-entry-list" class="entry-list"></div>
+        </div>
+      </div>
+      <div class="btn-row"><button class="btn-primary" onclick="saveSunday()">Save week plan</button><span class="save-confirm" id="sunday-confirm">Saved</span></div>
+    </div>
+
+    <!-- DAILY LOG -->
+    <div id="tab-daily" class="tab-content">
+      <div class="page-header">
+        <div class="page-title">Daily log</div>
+        <div class="page-sub">Tap to log. Use the dash tracker for outreach detail.</div>
+      </div>
+
+      <div class="day-selector" id="day-selector"></div>
+
+      <div class="section">
+        <div class="section-label">Activity</div>
+        <div class="tap-grid">
+          <div class="tap-card" onclick="increment('comments')">
+            <div class="tap-card-label">Comments</div>
+            <div class="tap-count" id="tap-comments">0</div>
+            <div class="tap-sub">today</div>
+            <button class="tap-undo" onclick="decrement(event,'comments')">undo</button>
+          </div>
+          <div class="tap-card" onclick="increment('outreach')">
+            <div class="tap-card-label">Outreach touches</div>
+            <div class="tap-count" id="tap-outreach">0</div>
+            <div class="tap-sub">today</div>
+            <button class="tap-undo" onclick="decrement(event,'outreach')">undo</button>
+          </div>
+          <div class="tap-card" onclick="increment('posts')">
+            <div class="tap-card-label">Posts published</div>
+            <div class="tap-count" id="tap-posts">0</div>
+            <div class="tap-sub">today</div>
+            <button class="tap-undo" onclick="decrement(event,'posts')">undo</button>
+          </div>
+          <div class="tap-card" onclick="increment('calls')">
+            <div class="tap-card-label">Calls / emails</div>
+            <div class="tap-count" id="tap-calls">0</div>
+            <div class="tap-sub">today</div>
+            <button class="tap-undo" onclick="decrement(event,'calls')">undo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Outreach detail</div>
+        <div class="dash-section">
+          <div class="dash-row">
+            <div class="dash-row-header">
+              <span class="dash-row-label">Connections sent</span>
+              <span class="dash-count-badge" id="count-conn">0</span>
+            </div>
+            <div class="dash-display" id="display-conn"></div>
+            <div class="dash-controls">
+              <button class="dash-add-btn" onclick="addDash('conn')">+ I</button>
+              <button class="dash-undo-btn" onclick="removeDash('conn')">undo</button>
+            </div>
+          </div>
+          <div class="dash-row">
+            <div class="dash-row-header">
+              <span class="dash-row-label">DMs sent</span>
+              <span class="dash-count-badge" id="count-dms">0</span>
+            </div>
+            <div class="dash-display" id="display-dms"></div>
+            <div class="dash-controls">
+              <button class="dash-add-btn" onclick="addDash('dms')">+ I</button>
+              <button class="dash-undo-btn" onclick="removeDash('dms')">undo</button>
+            </div>
+          </div>
+          <div class="dash-row">
+            <div class="dash-row-header">
+              <span class="dash-row-label">Responses</span>
+              <span class="dash-count-badge" id="count-resp">0</span>
+            </div>
+            <div class="dash-display" id="display-resp"></div>
+            <div class="dash-controls">
+              <button class="dash-add-btn" onclick="addDash('resp')">+ I</button>
+              <button class="dash-undo-btn" onclick="removeDash('resp')">undo</button>
+            </div>
+          </div>
+          <div class="dash-row">
+            <div class="dash-row-header">
+              <span class="dash-row-label">Meetings booked</span>
+              <span class="dash-count-badge" id="count-meet">0</span>
+            </div>
+            <div class="dash-display" id="display-meet"></div>
+            <div class="dash-controls">
+              <button class="dash-add-btn" onclick="addDash('meet')">+ I</button>
+              <button class="dash-undo-btn" onclick="removeDash('meet')">undo</button>
+            </div>
+          </div>
+          <div class="dash-row">
+            <div class="dash-row-header">
+              <span class="dash-row-label">Meetings via LinkedIn appointments</span>
+              <span class="dash-count-badge" id="count-liappt">0</span>
+            </div>
+            <div class="dash-display" id="display-liappt"></div>
+            <div class="dash-controls">
+              <button class="dash-add-btn" onclick="addDash('liappt')">+ I</button>
+              <button class="dash-undo-btn" onclick="removeDash('liappt')">undo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="section">
+        <div class="section-label">Weekly progress</div>
+        <div id="progress-rows"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Week totals</div>
+        <div class="metric-grid">
+          <div class="metric-card"><div class="metric-label">Outreach</div><div class="metric-val" id="total-outreach">0</div></div>
+          <div class="metric-card"><div class="metric-label">Comments</div><div class="metric-val" id="total-comments">0</div></div>
+          <div class="metric-card"><div class="metric-label">Posts</div><div class="metric-val" id="total-posts">0</div></div>
+          <div class="metric-card"><div class="metric-label">Calls/email</div><div class="metric-val" id="total-calls">0</div></div>
+        </div>
+      </div>
+
+      <div class="btn-row"><button class="btn-primary" onclick="saveDay()">Save today</button><span class="save-confirm" id="daily-confirm">Saved</span></div>
+    </div>
+
+    <!-- FUNNEL -->
+    <div id="tab-funnel" class="tab-content">
+      <div class="page-header">
+        <div class="page-title">Funnel</div>
+        <div class="page-sub">Pulled from your daily logs. No manual entry needed.</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">This week</div>
+        <div class="card">
+          <div class="summary-row"><span class="summary-key">Connections sent</span><span class="summary-val" id="f-week-conn">0</span></div>
+          <div class="summary-row"><span class="summary-key">DMs sent</span><span class="summary-val" id="f-week-dms">0</span></div>
+          <div class="summary-row"><span class="summary-key">Responses</span><span class="summary-val" id="f-week-resp">0</span></div>
+          <div class="summary-row"><span class="summary-key">Meetings booked</span><span class="summary-val" id="f-week-meet">0</span></div>
+          <div class="summary-row"><span class="summary-key">Via LinkedIn appointments</span><span class="summary-val" id="f-week-liappt">0</span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">All time</div>
+        <div class="card">
+          <div class="summary-row"><span class="summary-key">Connections sent</span><span class="summary-val" id="f-all-conn">0</span></div>
+          <div class="summary-row"><span class="summary-key">DMs sent</span><span class="summary-val" id="f-all-dms">0</span></div>
+          <div class="summary-row"><span class="summary-key">Responses</span><span class="summary-val" id="f-all-resp">0</span></div>
+          <div class="summary-row"><span class="summary-key">Meetings booked</span><span class="summary-val" id="f-all-meet">0</span></div>
+          <div class="summary-row"><span class="summary-key">Via LinkedIn appointments</span><span class="summary-val" id="f-all-liappt">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div id="tab-summary" class="tab-content">
+      <div class="page-header">
+        <div class="page-title">Weekly summary</div>
+        <div class="page-sub">Close the week. Saves a snapshot and resets for next week.</div>
+      </div>
+      <div class="section">
+        <div class="section-label">Activity vs targets</div>
+        <div class="card">
+          <div class="summary-row"><span class="summary-key">Outreach touches</span><span class="summary-val" id="sum-outreach">â</span></div>
+          <div class="summary-row"><span class="summary-key">Comments</span><span class="summary-val" id="sum-comments">â</span></div>
+          <div class="summary-row"><span class="summary-key">Posts published</span><span class="summary-val" id="sum-posts">â</span></div>
+          <div class="summary-row"><span class="summary-key">Calls / emails</span><span class="summary-val" id="sum-calls">â</span></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Outreach detail</div>
+        <div class="card">
+          <div class="summary-row"><span class="summary-key">Connections sent</span><span class="summary-val" id="sum-conn">â</span></div>
+          <div class="summary-row"><span class="summary-key">DMs sent</span><span class="summary-val" id="sum-dms">â</span></div>
+          <div class="summary-row"><span class="summary-key">Responses</span><span class="summary-val" id="sum-resp">â</span></div>
+          <div class="summary-row"><span class="summary-key">Meetings booked</span><span class="summary-val" id="sum-meet">â</span></div>
+          <div class="summary-row"><span class="summary-key">Via LinkedIn appointments</span><span class="summary-val" id="sum-liappt">â</span></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">BD priorities</div>
+        <div class="card"><div id="sum-bd-list"></div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="closeWeek()">Close week + save to archive</button>
+        <button class="btn-secondary" onclick="copyToClipboard()">Copy for Doug</button>
+        <span class="save-confirm" id="summary-confirm">Week saved</span>
+      </div>
+    </div>
+
+    <!-- ARCHIVE -->
+    <div id="tab-archive" class="tab-content">
+      <div class="page-header">
+        <div class="page-title">All weeks</div>
+        <div class="page-sub">Every saved week, newest first.</div>
+      </div>
+      <div id="archive-list"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Supabase JS client (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+// =============================================================
+// SUPABASE CONFIG
+// =============================================================
+const SUPABASE_URL = 'https://jffmdrlqiymgkkwegnfl.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Tvr_OlWxOPa7vF7hnC_QsA_KCtkOavi';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// =============================================================
+// APP STATE (same shape as original prototype)
+// =============================================================
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function defaultDay() {
+  return { comments:0, outreach:0, posts:0, calls:0, conn:0, dms:0, resp:0, meet:0, liappt:0 };
+}
+
+function defaultSunday() {
+  return { calEntries:[], speechEntries:[], travel:false, travelDetail:'', prepEntries:[], postsTarget:4, writing:'', outreachTarget:75, commentTarget:50, bdEntries:[] };
+}
+
+function defaultDaily() {
+  const daily = {};
+  for (let i = 0; i < 7; i++) daily[i] = defaultDay();
+  return daily;
+}
+
+function defaultState() {
+  return {
+    sunday: defaultSunday(),
+    daily: defaultDaily(),
+    allTime: { conn:0, dms:0, resp:0, meet:0, liappt:0 },
+    archive: [],
+    currentDay: new Date().getDay(),
+    weekStart: getSundayDate()
+  };
+}
+
+let state;
+
+function getSundayDate() {
+  const d = new Date(), day = d.getDay(), sun = new Date(d);
+  sun.setDate(d.getDate() - day);
+  return sun.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+
+// =============================================================
+// SUPABASE PERSISTENCE (replaces localStorage)
+// =============================================================
+
+// Debounce helper â coalesces rapid saves into one DB write
+let _saveTimer = null;
+function debouncedSave(delay) {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => persistToSupabase(), delay || 400);
+}
+
+async function persistToSupabase() {
+  try {
+    await sb.from('current_week').upsert({
+      id: 'current',
+      week_start: state.weekStart,
+      sunday: state.sunday,
+      daily: state.daily,
+      current_day: state.currentDay,
+      updated_at: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Save failed:', e);
+  }
+}
+
+async function loadFromSupabase() {
+  try {
+    // Load current week
+    const { data: weekRow } = await sb.from('current_week').select('*').eq('id', 'current').maybeSingle();
+
+    // Load all-time totals
+    const { data: totalsRow } = await sb.from('all_time_totals').select('*').eq('id', 'totals').maybeSingle();
+
+    // Load archive (newest first)
+    const { data: archiveRows } = await sb.from('weekly_archive').select('*').order('saved_at', { ascending: false });
+
+    state = defaultState();
+
+    if (weekRow) {
+      // Check if the stored week matches this week â if not, it's stale
+      const currentSunday = getSundayDate();
+      if (weekRow.week_start === currentSunday) {
+        state.sunday = { ...defaultSunday(), ...weekRow.sunday };
+        state.daily = weekRow.daily || defaultDaily();
+        state.currentDay = weekRow.current_day ?? new Date().getDay();
+        state.weekStart = weekRow.week_start;
+      }
+      // If week_start doesn't match, we start fresh (the old week should have been archived)
+    }
+
+    // Ensure all daily slots exist with all fields
+    for (let i = 0; i < 7; i++) {
+      if (!state.daily[i]) state.daily[i] = defaultDay();
+      ['conn','dms','resp','meet','liappt','comments','outreach','posts','calls'].forEach(k => {
+        if (state.daily[i][k] === undefined) state.daily[i][k] = 0;
+      });
+    }
+
+    if (totalsRow) {
+      state.allTime = {
+        conn: totalsRow.conn || 0,
+        dms: totalsRow.dms || 0,
+        resp: totalsRow.resp || 0,
+        meet: totalsRow.meet || 0,
+        liappt: totalsRow.liappt || 0
+      };
+    }
+
+    if (archiveRows && archiveRows.length > 0) {
+      state.archive = archiveRows.map(r => ({
+        weekOf: r.week_of,
+        outreach: r.outreach,
+        outreachTarget: r.outreach_target,
+        comments: r.comments,
+        commentTarget: r.comment_target,
+        posts: r.posts,
+        postsTarget: r.posts_target,
+        calls: r.calls,
+        conn: r.conn,
+        dms: r.dms,
+        resp: r.resp,
+        meet: r.meet,
+        liappt: r.liappt,
+        bdEntries: r.bd_entries || [],
+        savedAt: r.saved_at
+      }));
+    }
+  } catch (e) {
+    console.error('Load failed, using defaults:', e);
+    state = defaultState();
+  }
+}
+
+// Convenience: save() is called everywhere in the original code â now it debounces to Supabase
+function save() {
+  debouncedSave(400);
+}
+
+// =============================================================
+// TAB NAVIGATION (unchanged)
+// =============================================================
+function showTab(name, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name === 'summary') renderSummary();
+  if (name === 'archive') renderArchive();
+  if (name === 'funnel') renderFunnel();
+  if (name === 'daily') renderDailyFull();
+}
+
+// =============================================================
+// INIT
+// =============================================================
+async function init() {
+  await loadFromSupabase();
+  document.getElementById('sidebar-week').textContent = 'Week of ' + getSundayDate();
+  buildDaySelector();
+  renderSundayForm();
+  renderDailyFull();
+  renderWeekHistory();
+  // Hide loading overlay
+  document.getElementById('loading').classList.add('hidden');
+}
+
+// =============================================================
+// DAY SELECTOR (unchanged)
+// =============================================================
+function buildDaySelector() {
+  const sel = document.getElementById('day-selector');
+  sel.innerHTML = '';
+  DAYS.forEach((d, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'day-btn' + (i === state.currentDay ? ' active' : '');
+    btn.textContent = d;
+    btn.onclick = () => setDay(i);
+    sel.appendChild(btn);
+  });
+}
+
+function setDay(d) {
+  state.currentDay = d;
+  buildDaySelector();
+  renderDailyFull();
+}
+
+// =============================================================
+// DASH SYSTEM (unchanged logic)
+// =============================================================
+const DASH_FIELDS = ['conn','dms','resp','meet','liappt'];
+
+function renderDash(field) {
+  const count = state.daily[state.currentDay][field] || 0;
+  document.getElementById('count-' + field).textContent = count;
+  const display = document.getElementById('display-' + field);
+  if (count === 0) { display.innerHTML = ''; return; }
+  let html = '';
+  const fullGroups = Math.floor(count / 5);
+  const remainder = count % 5;
+  for (let g = 0; g < fullGroups; g++) {
+    html += '<span class="group">IIIII</span>';
+  }
+  if (remainder > 0) {
+    html += '<span class="group">' + 'I'.repeat(remainder) + '</span>';
+  }
+  display.innerHTML = html;
+}
+
+function addDash(field) {
+  state.daily[state.currentDay][field] = (state.daily[state.currentDay][field] || 0) + 1;
+  renderDash(field);
+  renderTotals();
+  save();
+}
+
+function removeDash(field) {
+  const cur = state.daily[state.currentDay][field] || 0;
+  if (cur <= 0) return;
+  state.daily[state.currentDay][field] = cur - 1;
+  renderDash(field);
+  renderTotals();
+  save();
+}
+
+// =============================================================
+// DAILY LOG (unchanged logic)
+// =============================================================
+function renderDailyFull() {
+  buildDaySelector();
+  const d = state.currentDay;
+  const day = state.daily[d];
+  document.getElementById('tap-comments').textContent = day.comments;
+  document.getElementById('tap-outreach').textContent = day.outreach;
+  document.getElementById('tap-posts').textContent = day.posts;
+  document.getElementById('tap-calls').textContent = day.calls;
+  DASH_FIELDS.forEach(f => renderDash(f));
+  renderTotals();
+}
+
+function increment(metric) {
+  state.daily[state.currentDay][metric]++;
+  document.getElementById('tap-' + metric).textContent = state.daily[state.currentDay][metric];
+  renderTotals();
+  save();
+}
+
+function decrement(e, metric) {
+  e.stopPropagation();
+  if (state.daily[state.currentDay][metric] <= 0) return;
+  state.daily[state.currentDay][metric]--;
+  document.getElementById('tap-' + metric).textContent = state.daily[state.currentDay][metric];
+  renderTotals();
+  save();
+}
+
+function weekTotal(metric) { return Object.values(state.daily).reduce((s, d) => s + (d[metric] || 0), 0); }
+
+function renderTotals() {
+  const out = weekTotal('outreach'), com = weekTotal('comments'), pos = weekTotal('posts'), cal = weekTotal('calls');
+  const outT = state.sunday.outreachTarget || 75, comT = state.sunday.commentTarget || 50, posT = state.sunday.postsTarget || 4;
+  document.getElementById('total-outreach').textContent = out;
+  document.getElementById('total-comments').textContent = com;
+  document.getElementById('total-posts').textContent = pos;
+  document.getElementById('total-calls').textContent = cal;
+  const rows = document.getElementById('progress-rows');
+  rows.innerHTML = '';
+  const addRow = (label, val, target) => {
+    const pct = Math.min(100, target > 0 ? Math.round((val/target)*100) : 0);
+    rows.innerHTML += `<div class="progress-row"><span class="progress-label">${label}</span><div class="progress-bar"><div class="progress-fill${pct>=100?' done':''}" style="width:${pct}%"></div></div><span class="progress-val">${val} / ${target}</span></div>`;
+  };
+  addRow('Outreach', out, outT);
+  addRow('Comments', com, comT);
+  addRow('Posts', pos, posT);
+}
+
+function saveDay() { save(); flash('daily-confirm'); }
+
+// =============================================================
+// FUNNEL â read only, derived from daily (unchanged logic)
+// =============================================================
+
+/* ---------------------------------------------------------------
+   DRIPIFY INTEGRATION POINT (future)
+   ---------------------------------------------------------------
+   When Dripify is connected via Zapier, a webhook POST to
+   /api/dripify-webhook will write incoming data (connections sent,
+   DMs sent, responses) directly into the current_week.daily JSONB
+   in Supabase. The funnel numbers below will automatically reflect
+   those values since they read from state.daily via weekTotal().
+
+   Fields that Dripify would populate:
+     - conn  (connections sent)
+     - dms   (DMs sent)
+     - resp  (responses received)
+
+   No changes needed here â just wire the webhook to update the
+   daily JSONB for the correct day index.
+   --------------------------------------------------------------- */
+
+function renderFunnel() {
+  const conn = weekTotal('conn'), dms = weekTotal('dms'), resp = weekTotal('resp'), meet = weekTotal('meet'), liappt = weekTotal('liappt');
+  document.getElementById('f-week-conn').textContent = conn;
+  document.getElementById('f-week-dms').textContent = dms;
+  document.getElementById('f-week-resp').textContent = resp;
+  document.getElementById('f-week-meet').textContent = meet;
+  document.getElementById('f-week-liappt').textContent = liappt;
+  const a = state.allTime;
+  document.getElementById('f-all-conn').textContent = (a.conn||0) + conn;
+  document.getElementById('f-all-dms').textContent = (a.dms||0) + dms;
+  document.getElementById('f-all-resp').textContent = (a.resp||0) + resp;
+  document.getElementById('f-all-meet').textContent = (a.meet||0) + meet;
+  document.getElementById('f-all-liappt').textContent = (a.liappt||0) + liappt;
+}
+
+// =============================================================
+// SUNDAY PLAN (unchanged logic)
+// =============================================================
+function makeEntryItem(text, type, index, listId, prepKey) {
+  const item = document.createElement('div');
+  item.className = 'entry-item';
+  const header = document.createElement('div');
+  header.className = 'entry-item-header';
+  const name = document.createElement('span');
+  name.className = 'entry-item-name';
+  name.textContent = text;
+  const typeLabel = document.createElement('span');
+  typeLabel.className = 'entry-item-type';
+  if (type) typeLabel.textContent = type;
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'entry-remove-btn';
+  removeBtn.textContent = '\u00d7';
+  removeBtn.onclick = (e) => { e.stopPropagation(); removeEntryByListId(listId, index); };
+  header.appendChild(name);
+  if (type) header.appendChild(typeLabel);
+  if (prepKey) {
+    const expandBtn = document.createElement('button');
+    expandBtn.className = 'entry-expand-btn';
+    expandBtn.textContent = '+ prep';
+    expandBtn.onclick = (e) => { e.stopPropagation(); const prep = item.querySelector('.entry-prep'); prep.classList.toggle('open'); expandBtn.textContent = prep.classList.contains('open') ? '\u2212 prep' : '+ prep'; };
+    header.appendChild(expandBtn);
+  }
+  header.appendChild(removeBtn);
+  item.appendChild(header);
+  if (prepKey) {
+    const prep = document.createElement('div');
+    prep.className = 'entry-prep';
+    const ta = document.createElement('textarea');
+    ta.placeholder = 'Prep notes...';
+    const arr = state.sunday[prepKey] || [];
+    ta.value = arr[index] && arr[index].prep ? arr[index].prep : '';
+    ta.oninput = () => { if (state.sunday[prepKey] && state.sunday[prepKey][index]) { state.sunday[prepKey][index].prep = ta.value; save(); } };
+    prep.appendChild(ta);
+    item.appendChild(prep);
+  }
+  return item;
+}
+
+function removeEntryByListId(listId, index) {
+  if (listId === 'cal-entry-list') { state.sunday.calEntries.splice(index,1); renderCalEntries(); }
+  else if (listId === 'speech-entry-list') { state.sunday.speechEntries.splice(index,1); renderSpeechEntries(); }
+  else if (listId === 'prep-entry-list') { state.sunday.prepEntries.splice(index,1); renderPrepEntries(); }
+  else if (listId === 'bd-entry-list') { state.sunday.bdEntries.splice(index,1); renderBdEntries(); }
+  save();
+}
+
+function addCalEntry(e, type) {
+  if (e.key !== 'Enter') return;
+  const input = document.getElementById('cal-input-' + type);
+  const val = input.value.trim();
+  if (!val) return;
+  state.sunday.calEntries.push({ name:val, type:type, prep:'' });
+  input.value = '';
+  renderCalEntries();
+  save();
+}
+
+function renderCalEntries() {
+  const list = document.getElementById('cal-entry-list');
+  list.innerHTML = '';
+  state.sunday.calEntries.forEach((e,i) => list.appendChild(makeEntryItem(e.name, e.type, i, 'cal-entry-list', 'calEntries')));
+}
+
+function addSpeechEntry(e) {
+  if (e.key !== 'Enter') return;
+  const input = document.getElementById('speech-input');
+  const val = input.value.trim();
+  if (!val) return;
+  state.sunday.speechEntries.push({ name:val, prep:'' });
+  input.value = '';
+  renderSpeechEntries();
+  save();
+}
+
+function renderSpeechEntries() {
+  const list = document.getElementById('speech-entry-list');
+  list.innerHTML = '';
+  state.sunday.speechEntries.forEach((e,i) => list.appendChild(makeEntryItem(e.name, '', i, 'speech-entry-list', 'speechEntries')));
+}
+
+function addPrepEntry(e) {
+  if (e.key !== 'Enter') return;
+  const input = document.getElementById('prep-input');
+  const val = input.value.trim();
+  if (!val) return;
+  state.sunday.prepEntries.push({ name:val, prep:'' });
+  input.value = '';
+  renderPrepEntries();
+  save();
+}
+
+function renderPrepEntries() {
+  const list = document.getElementById('prep-entry-list');
+  list.innerHTML = '';
+  state.sunday.prepEntries.forEach((e,i) => list.appendChild(makeEntryItem(e.name, '', i, 'prep-entry-list', 'prepEntries')));
+}
+
+function addBdEntry(e) {
+  if (e.key !== 'Enter') return;
+  const input = document.getElementById('bd-input');
+  const val = input.value.trim();
+  if (!val) return;
+  state.sunday.bdEntries.push(val);
+  input.value = '';
+  renderBdEntries();
+  save();
+}
+
+function renderBdEntries() {
+  const list = document.getElementById('bd-entry-list');
+  list.innerHTML = '';
+  state.sunday.bdEntries.forEach((e,i) => {
+    const item = document.createElement('div');
+    item.className = 'entry-item';
+    item.innerHTML = `<div class="entry-item-header"><span class="entry-item-name">${e}</span><button class="entry-remove-btn" onclick="removeBd(${i})">\u00d7</button></div>`;
+    list.appendChild(item);
+  });
+}
+
+function removeBd(i) { state.sunday.bdEntries.splice(i,1); renderBdEntries(); save(); }
+
+function toggleTravel() {
+  state.sunday.travel = !state.sunday.travel;
+  document.getElementById('travel-toggle').classList.toggle('on', state.sunday.travel);
+  document.getElementById('travel-detail').style.display = state.sunday.travel ? 'block' : 'none';
+  save();
+}
+
+function renderSundayForm() {
+  const s = state.sunday;
+  document.getElementById('s-posts-target').value = s.postsTarget;
+  document.getElementById('s-writing').value = s.writing;
+  document.getElementById('s-outreach-target').value = s.outreachTarget;
+  document.getElementById('s-comment-target').value = s.commentTarget;
+  document.getElementById('travel-toggle').classList.toggle('on', s.travel);
+  document.getElementById('travel-detail').style.display = s.travel ? 'block' : 'none';
+  document.getElementById('travel-input').value = s.travelDetail || '';
+  renderCalEntries(); renderSpeechEntries(); renderPrepEntries(); renderBdEntries();
+}
+
+function saveSunday() {
+  state.sunday.postsTarget = parseInt(document.getElementById('s-posts-target').value) || 4;
+  state.sunday.writing = document.getElementById('s-writing').value;
+  state.sunday.outreachTarget = parseInt(document.getElementById('s-outreach-target').value) || 75;
+  state.sunday.commentTarget = parseInt(document.getElementById('s-comment-target').value) || 50;
+  state.sunday.travelDetail = document.getElementById('travel-input').value;
+  save();
+  flash('sunday-confirm');
+}
+
+// =============================================================
+// SUMMARY (unchanged logic)
+// =============================================================
+function renderSummary() {
+  const out = weekTotal('outreach'), com = weekTotal('comments'), pos = weekTotal('posts'), cal = weekTotal('calls');
+  const s = state.sunday;
+  document.getElementById('sum-outreach').textContent = out + ' / ' + (s.outreachTarget||75);
+  document.getElementById('sum-comments').textContent = com + ' / ' + (s.commentTarget||50);
+  document.getElementById('sum-posts').textContent = pos + ' / ' + (s.postsTarget||4);
+  document.getElementById('sum-calls').textContent = cal;
+  document.getElementById('sum-conn').textContent = weekTotal('conn');
+  document.getElementById('sum-dms').textContent = weekTotal('dms');
+  document.getElementById('sum-resp').textContent = weekTotal('resp');
+  document.getElementById('sum-meet').textContent = weekTotal('meet');
+  document.getElementById('sum-liappt').textContent = weekTotal('liappt');
+  const bdList = document.getElementById('sum-bd-list');
+  bdList.innerHTML = '';
+  if (s.bdEntries && s.bdEntries.length > 0) {
+    s.bdEntries.forEach(e => { const row = document.createElement('div'); row.className = 'summary-row'; row.innerHTML = `<span class="summary-key">${e}</span>`; bdList.appendChild(row); });
+  } else { bdList.innerHTML = '<div class="empty-state">No BD priorities set</div>'; }
+}
+
+async function closeWeek() {
+  const wConn = weekTotal('conn'), wDms = weekTotal('dms'), wResp = weekTotal('resp'), wMeet = weekTotal('meet'), wLiappt = weekTotal('liappt');
+  const s = state.sunday;
+
+  // 1. Insert snapshot into weekly_archive
+  const snapshot = {
+    week_of: getSundayDate(),
+    outreach: weekTotal('outreach'),
+    outreach_target: s.outreachTarget || 75,
+    comments: weekTotal('comments'),
+    comment_target: s.commentTarget || 50,
+    posts: weekTotal('posts'),
+    posts_target: s.postsTarget || 4,
+    calls: weekTotal('calls'),
+    conn: wConn,
+    dms: wDms,
+    resp: wResp,
+    meet: wMeet,
+    liappt: wLiappt,
+    bd_entries: [...(s.bdEntries || [])],
+    saved_at: new Date().toISOString()
+  };
+
+  const { error: archiveErr } = await sb.from('weekly_archive').insert(snapshot);
+  if (archiveErr) { console.error('Archive save failed:', archiveErr); return; }
+
+  // 2. Roll dash totals into all-time
+  const newAllTime = {
+    conn: (state.allTime.conn || 0) + wConn,
+    dms: (state.allTime.dms || 0) + wDms,
+    resp: (state.allTime.resp || 0) + wResp,
+    meet: (state.allTime.meet || 0) + wMeet,
+    liappt: (state.allTime.liappt || 0) + wLiappt
+  };
+
+  await sb.from('all_time_totals').upsert({
+    id: 'totals',
+    ...newAllTime,
+    updated_at: new Date().toISOString()
+  });
+
+  // 3. Reset current week in local state
+  const fresh = defaultState();
+  fresh.allTime = newAllTime;
+  // Reload archive from DB to get the latest
+  const { data: archiveRows } = await sb.from('weekly_archive').select('*').order('saved_at', { ascending: false });
+  fresh.archive = (archiveRows || []).map(r => ({
+    weekOf: r.week_of,
+    outreach: r.outreach,
+    outreachTarget: r.outreach_target,
+    comments: r.comments,
+    commentTarget: r.comment_target,
+    posts: r.posts,
+    postsTarget: r.posts_target,
+    calls: r.calls,
+    conn: r.conn,
+    dms: r.dms,
+    resp: r.resp,
+    meet: r.meet,
+    liappt: r.liappt,
+    bdEntries: r.bd_entries || [],
+    savedAt: r.saved_at
+  }));
+
+  state = fresh;
+
+  // 4. Persist the clean week to Supabase
+  await persistToSupabase();
+
+  renderWeekHistory();
+  flash('summary-confirm');
+  setTimeout(() => { showTab('sunday', document.querySelector('.nav-item')); renderSundayForm(); renderDailyFull(); }, 800);
+}
+
+function copyToClipboard() {
+  const s = state.sunday;
+  const text = `WEEKLY SUMMARY \u2014 Week of ${getSundayDate()}\n\nACTIVITY\nOutreach: ${weekTotal('outreach')} / ${s.outreachTarget||75}\nComments: ${weekTotal('comments')} / ${s.commentTarget||50}\nPosts: ${weekTotal('posts')} / ${s.postsTarget||4}\nCalls/emails: ${weekTotal('calls')}\n\nOUTREACH DETAIL\nConnections sent: ${weekTotal('conn')}\nDMs sent: ${weekTotal('dms')}\nResponses: ${weekTotal('resp')}\nMeetings booked: ${weekTotal('meet')}\nVia LinkedIn appointments: ${weekTotal('liappt')}\n\nBD PRIORITIES\n${(s.bdEntries||[]).join('\n')||'\u2014'}`;
+  navigator.clipboard.writeText(text).catch(() => {});
+  flash('summary-confirm', 'Copied');
+}
+
+// =============================================================
+// ARCHIVE (unchanged logic)
+// =============================================================
+function renderArchive() {
+  const list = document.getElementById('archive-list');
+  list.innerHTML = '';
+  if (!state.archive || state.archive.length === 0) { list.innerHTML = '<div class="empty-state">No saved weeks yet.</div>'; return; }
+  state.archive.forEach(w => {
+    const pct = Math.round((w.outreach / (w.outreachTarget||75)) * 100);
+    const card = document.createElement('div');
+    card.className = 'archive-card';
+    card.innerHTML = `<div class="archive-card-header"><span class="archive-week">Week of ${w.weekOf}</span><span class="status-pill ${pct>=100?'pill-green':'pill-amber'}">${pct}% outreach</span></div><div class="archive-stats"><span class="archive-stat">Outreach <strong>${w.outreach}/${w.outreachTarget||75}</strong></span><span class="archive-stat">Comments <strong>${w.comments}/${w.commentTarget||50}</strong></span><span class="archive-stat">Posts <strong>${w.posts}/${w.postsTarget||4}</strong></span><span class="archive-stat">Connections <strong>${w.conn||0}</strong></span><span class="archive-stat">DMs <strong>${w.dms||0}</strong></span><span class="archive-stat">Responses <strong>${w.resp||0}</strong></span><span class="archive-stat">Meetings <strong>${w.meet||0}</strong></span><span class="archive-stat">LI appts <strong>${w.liappt||0}</strong></span></div>`;
+    list.appendChild(card);
+  });
+}
+
+function renderWeekHistory() {
+  const list = document.getElementById('week-history-list');
+  list.innerHTML = '';
+  (state.archive||[]).slice(0,5).forEach(w => {
+    const btn = document.createElement('button');
+    btn.className = 'week-list-item';
+    btn.textContent = w.weekOf;
+    btn.onclick = () => showTab('archive', null);
+    list.appendChild(btn);
+  });
+}
+
+// =============================================================
+// UTILITY
+// =============================================================
+function flash(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg || 'Saved';
+  el.style.display = 'inline';
+  setTimeout(() => el.style.display = 'none', 2000);
+}
+
+// Boot
+init();
+</script>
+</body>
+</html>
